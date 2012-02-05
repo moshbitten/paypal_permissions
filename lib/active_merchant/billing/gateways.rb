@@ -3,7 +3,6 @@ module ActiveMerchant
     autoload :Gateway, 'active_merchant/billing/gateway'
 
     Dir[File.dirname(__FILE__) + '/gateways/**/*.rb'].each do |f|
-
       # Get camelized class name
       filename = File.basename(f, '.rb')
       # Add _gateway suffix

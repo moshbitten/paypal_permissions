@@ -4,6 +4,10 @@ require 'uri'
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class PaypalPermissionsGateway < Gateway # :nodoc
+      def self.setup
+        yield self
+      end
+
       URLS = {
         :test => {
           :request_permissions => 'https://svcs.sandbox.paypal.com/Permissions/RequestPermissions',
