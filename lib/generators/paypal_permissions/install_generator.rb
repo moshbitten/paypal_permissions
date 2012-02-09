@@ -7,19 +7,44 @@ module PaypalPermissions
       class_option :orm
 
       def update_configuration
-        application(nil, :env => "development") do <<AFTER_INITIALIZE
+        dev_test_config = <<-DEV_TEST_CONFIG
 #{Rails.application.class.name.split('::').first}::Application.configure do
   config.after_initialize do
     permissions_options = {
-      :login => "TODO: your PayPal caller login",
-      :password => "TODO: your PayPal caller login",
-      :signature => "TODO: your PayPal caller login",
+      :login => "TODO: your PayPal sandbox caller login",
+      :password => "TODO: your PayPal sandbox caller login",
+      :signature => "TODO: your PayPal sandbox caller login",
       :app_id => "APP-80W284485P519543T",  # This is the app_id for all PayPal Permissions Service sandbox test apps
     }
     ::PAYPAL_PERMISSIONS_GATEWAY = ActiveMerchant::Billing::PaypalPermissionsGateway.new(permissions_options)
   end
 end
-AFTER_INITIALIZE
+        DEV_TEST_CONFIG
+
+        prod_config = <<-PROD_CONFIG
+#{Rails.application.class.name.split('::').first}::Application.configure do
+  config.after_initialize do
+    permissions_options = {
+      :login => "TODO: your PayPal live caller login",
+      :password => "TODO: your PayPal live caller login",
+      :signature => "TODO: your PayPal live caller login",
+      :app_id => "TODO: your PayPal live app id",
+    }
+    ::PAYPAL_PERMISSIONS_GATEWAY = ActiveMerchant::Billing::PaypalPermissionsGateway.new(permissions_options)
+  end
+end
+        PROD_CONFIG
+
+        application(nil, :env => "development") do
+          dev_test_config
+        end
+
+        application(nil, :env => "test") do
+          dev_test_config
+        end
+
+        application(nil, :env => "production") do
+          prod_config
         end
       end
 
