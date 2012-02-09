@@ -1,1 +1,12 @@
-Tell me something good.
+
+Now that you've installed PaypalPermissions, the first thing you'll need
+to do is add your PayPal login, password, signature, and app_id to the
+config/environments/*.rb files.
+
+Then, you can create a new model with routes, or a migration to modify
+an existing model to support your application's interactions with the
+PayPal Permissions API.
+
+Try:
+  rails generate paypal_permissions <model> [field_name:field_type ...]
+

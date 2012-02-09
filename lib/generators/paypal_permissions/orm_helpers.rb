@@ -1,4 +1,4 @@
-module ActiveMerchant::Billing::PaypalPermissions
+module PaypalPermissions
   module Generators
     module OrmHelpers
       def model_contents

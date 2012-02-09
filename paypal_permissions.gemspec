@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Mark Paine"]
   s.email       = ["mark@mailbiter.com"]
   s.homepage    = ""
-  s.summary     = %q{"Write a gem summary"}
-  s.description = %q{"Write a gem description"}
+  s.summary     = %q{"Rails gem for PayPal Permissions API support."}
+  s.description = %q{"A gem to support PayPal Permissions API for Rails applications using ActiveMerchant."}
 
   s.rubyforge_project = "paypal_permissions"
 
@@ -18,13 +18,11 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 
+  s.add_development_dependency "rake"
   s.add_development_dependency "activesupport", "~> 3.0"
   s.add_development_dependency "activemerchant"
   s.add_development_dependency "rspec", "~> 2.6"
   s.add_development_dependency "vcr", "~> 1.11"
-  s.add_development_dependency "cucumber"
-  s.add_development_dependency "aruba"
   s.add_runtime_dependency "activesupport", "~> 3.0"
   s.add_runtime_dependency "activemerchant"
-  s.add_runtime_dependency "thor"
 end

@@ -22,22 +22,27 @@ module ActiveRecord
       end
 
       def inject_paypal_permissions_content
-        inject_into_class(model_path, class_name, model_contents + <<CONTENT) if model_exists?
-  # Setup accessible (or protected) attributes for your model
-  attr_accessible :ack, :correlation_id, :token, :envelope_timestamp, :errors, :raw_response
-CONTENT
+        inject_into_class(model_path, class_name, model_contents + <<ACCESSIBLE_FIELDS) if model_exists?
+  attr_accessible :ack, :correlation_id, :request_token, :envelope_timestamp, :errors, :raw_response
+ACCESSIBLE_FIELDS
       end
 
       def migration_data
 <<MIGRATION_FIELDS
-      ## Paypal Permissions response fields
+      # Paypal Permissions response fields
       t.string :ack
       t.string :correlation_id
-      t.string :token
+      t.string :request_token
       t.datetime :envelope_timestamp
       t.text :errors
       t.text :raw_response
 MIGRATION_FIELDS
+      end
+
+      def indexes
+<<INDEXES
+    add_index :#{table_name}, :request_token
+INDEXES
       end
     end
   end
