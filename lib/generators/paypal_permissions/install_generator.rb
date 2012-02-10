@@ -35,16 +35,21 @@ end
 end
         PROD_CONFIG
 
-        application(nil, :env => "development") do
-          dev_test_config
+        # Don't use... "application(nil, :env => "development") do" here.
+        # Somewhere along the line, in the case where the :env parameter is supplied,
+        # railties went from using append_file to using inject_into_file after an env_file_sentinel,
+        # which changes the semantics drastically.
+        #
+        append_file("config/environments/development.rb") do
+          "\n#{dev_test_config}"
         end
 
-        application(nil, :env => "test") do
-          dev_test_config
+        append_file("config/environments/test.rb") do
+          "\n#{dev_test_config}"
         end
 
-        application(nil, :env => "production") do
-          prod_config
+        append_file("config/environments/production.rb") do
+          "\n#{prod_config}"
         end
       end
 
