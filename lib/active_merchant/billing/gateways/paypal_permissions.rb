@@ -1,6 +1,9 @@
 require 'active_merchant'
 require 'uri'
 require 'cgi'
+require 'openssl'
+require 'base64'
+
 
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
@@ -13,7 +16,15 @@ module ActiveMerchant #:nodoc:
       public
       def initialize(options = {})
         requires!(options, :login, :password, :signature, :app_id)
-        headers = {
+        request_permissions_headers = {
+          'X-PAYPAL-SECURITY-USERID' => options.delete(:login),
+          'X-PAYPAL-SECURITY-PASSWORD' => options.delete(:password),
+          'X-PAYPAL-SECURITY-SIGNATURE' => options.delete(:signature),
+          'X-PAYPAL-APPLICATION-ID' => options.delete(:app_id),
+          'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
+          'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
+        }
+        request_permissions_headers = {
           'X-PAYPAL-SECURITY-USERID' => options.delete(:login),
           'X-PAYPAL-SECURITY-PASSWORD' => options.delete(:password),
           'X-PAYPAL-SECURITY-SIGNATURE' => options.delete(:signature),
@@ -22,7 +33,7 @@ module ActiveMerchant #:nodoc:
           'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
         }
         @options = {
-          :headers => headers,
+          :request_permissions_headers => request_permissions_headers,
         }.update(options)
         super
       end
@@ -30,12 +41,27 @@ module ActiveMerchant #:nodoc:
       public
       def request_permissions(callback_url, scope)
         query_string = build_request_permissions_query_string callback_url, scope
-        nvp_response = ssl_get "#{request_permissions_url}?#{query_string}", @options[:headers]
+        nvp_response = ssl_get "#{request_permissions_url}?#{query_string}", @options[:request_permissions_headers]
         if nvp_response =~ /error\(\d+\)/
           puts "request: #{request_permissions_url}?#{query_string}\n"
           puts "nvp_response: #{nvp_response}\n"
         end
         response = parse_request_permissions_nvp(nvp_response)
+      end
+
+      public
+      def request_permissions_url
+        test? ? URLS[:test][:request_permissions] : URLS[:live][:request_permissions]
+      end
+
+      public
+      def get_access_token_url
+        test? ? URLS[:test][:get_access_token] : URLS[:live][:get_access_token]
+      end
+
+      public
+      def get_permissions_url
+        test? ? URLS[:test][:get_permissions] : URLS[:live][:get_permissions]
       end
 
       private
@@ -51,11 +77,6 @@ module ActiveMerchant #:nodoc:
           :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
         }
       }
-
-      private
-      def request_permissions_url
-        test? ? URLS[:test][:request_permissions] : URLS[:live][:request_permissions]
-      end
 
       private
       def build_request_permissions_query_string(callback_url, scope)
@@ -152,6 +173,69 @@ module ActiveMerchant #:nodoc:
         end
         response
       end
+
+      private
+      def authentication_header url
+        timestamp = Time.now.to_i
+        signature = authentication_signature url, timestamp
+        { 'X-PAYPAL-AUTHORIZATION' => "token=#{access_token}, signature=#{signature}, timeStamp=#{timestamp}" }
+      end
+
+      private
+      def authentication_signature url, timestamp
+        # no query params, but if there were, this is where they'd go
+        query_params = {}
+        key = [ password, verifier ].join("&")
+        params = query_params.dup.merge({
+          "oauth_consumer_key" => @options[:request_permissions_headers]['X-PAYPAL-SECURITY-USERID'],
+          "oauth_version" => "1.0",
+          "oauth_signature_method" => "HMAC-SHA1",
+          "oauth_token" => access_token,
+          "oauth_timestamp" => timestamp,
+        })
+        sorted_params = Hash[params.sort]
+        sorted_query_string = sorted_params.to_query
+        data = [ "POST", url, sorted_query_string ].join("&")  # ? "https://api.sandbox.paypal.com/nvp"
+        digest = OpenSSL::Digest::Digest.new('sha1')
+        OpenSSL::HMAC.digest(digest, key, data)
+        enc = Base64.encode64('Send reinforcements')  # encode per RFC 2045 (not 4648
+      end
+        
+
+=begin
+	public static Map getAuthHeader(String apiUserName, String apiPassword,
+			String accessToken, String tokenSecret, HTTPMethod httpMethod,
+			String scriptURI,Map queryParams) throws OAuthException {
+		
+		Map headers=new HashMap();
+		String consumerKey = apiUserName;
+		String consumerSecretStr = apiPassword;
+		String time = String.valueOf(System.currentTimeMillis()/1000);
+		
+		OAuthSignature oauth = new OAuthSignature(consumerKey,consumerSecretStr);
+		if(HTTPMethod.GET.equals(httpMethod) && queryParams != null){
+			Iterator itr = queryParams.entrySet().iterator();
+		    while (itr.hasNext()) {
+		        Map.Entry param = (Map.Entry)itr.next();
+		        String key=(String)param.getKey();
+		        String value=(String)param.getValue();
+		        oauth.addParameter(key,value);
+		    }
+		  }	
+		oauth.setToken(accessToken);
+		oauth.setTokenSecret(tokenSecret);
+		oauth.setHTTPMethod(httpMethod);
+		oauth.setTokenTimestamp(time);
+		oauth.setRequestURI(scriptURI);
+		//Compute Signature
+		String sig = oauth.computeV1Signature();
+		
+		headers.put("Signature", sig);
+		headers.put("TimeStamp", time);
+		return headers;
+		
+	}
+=end
 
       private
       def setup_purchase(options)

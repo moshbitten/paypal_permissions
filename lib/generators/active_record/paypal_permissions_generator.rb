@@ -23,7 +23,7 @@ module ActiveRecord
 
       def inject_paypal_permissions_content
         inject_into_class(model_path, class_name, model_contents + <<ACCESSIBLE_FIELDS) if model_exists?
-  attr_accessible :ack, :correlation_id, :request_token, :envelope_timestamp, :errors, :raw_response
+  attr_accessible :ack, :correlation_id, :request_token, :verifier, :envelope_timestamp, :errors, :raw_response
 ACCESSIBLE_FIELDS
       end
 
@@ -33,6 +33,7 @@ ACCESSIBLE_FIELDS
       t.string :ack
       t.string :correlation_id
       t.string :request_token
+      t.string :verifier
       t.datetime :envelope_timestamp
       t.text :errors
       t.text :raw_response
