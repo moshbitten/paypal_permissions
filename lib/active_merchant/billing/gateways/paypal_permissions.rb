@@ -24,16 +24,10 @@ module ActiveMerchant #:nodoc:
           'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
           'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
         }
-        request_permissions_headers = {
-          'X-PAYPAL-SECURITY-USERID' => options.delete(:login),
-          'X-PAYPAL-SECURITY-PASSWORD' => options.delete(:password),
-          'X-PAYPAL-SECURITY-SIGNATURE' => options.delete(:signature),
-          'X-PAYPAL-APPLICATION-ID' => options.delete(:app_id),
-          'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
-          'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
-        }
+        get_access_token_headers = request_permissions_headers.dup
         @options = {
           :request_permissions_headers => request_permissions_headers,
+          :get_access_token_headers => get_access_token_headers,
         }.update(options)
         super
       end
