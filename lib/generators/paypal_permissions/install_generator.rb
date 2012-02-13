@@ -11,10 +11,10 @@ module PaypalPermissions
 #{Rails.application.class.name.split('::').first}::Application.configure do
   config.after_initialize do
     permissions_options = {
-      :login => "TODO: your PayPal sandbox caller login",
-      :password => "TODO: your PayPal sandbox caller login",
-      :signature => "TODO: your PayPal sandbox caller login",
-      :app_id => "APP-80W284485P519543T",  # This is the app_id for all PayPal Permissions Service sandbox test apps
+      :login => 'TODO: your PayPal sandbox caller login',
+      :password => 'TODO: your PayPal sandbox caller password',
+      :signature => 'TODO: your PayPal sandbox caller signature',
+      :app_id => 'APP-80W284485P519543T',  # This is the app_id for all PayPal Permissions Service sandbox test apps
     }
     ::PAYPAL_PERMISSIONS_GATEWAY = ActiveMerchant::Billing::PaypalPermissionsGateway.new(permissions_options)
   end
@@ -25,10 +25,10 @@ end
 #{Rails.application.class.name.split('::').first}::Application.configure do
   config.after_initialize do
     permissions_options = {
-      :login => "TODO: your PayPal live caller login",
-      :password => "TODO: your PayPal live caller login",
-      :signature => "TODO: your PayPal live caller login",
-      :app_id => "TODO: your PayPal live app id",
+      :login => 'TODO: your PayPal live caller login',
+      :password => 'TODO: your PayPal live caller password',
+      :signature => 'TODO: your PayPal live caller signature',
+      :app_id => 'TODO: your PayPal live app id',
     }
     ::PAYPAL_PERMISSIONS_GATEWAY = ActiveMerchant::Billing::PaypalPermissionsGateway.new(permissions_options)
   end
