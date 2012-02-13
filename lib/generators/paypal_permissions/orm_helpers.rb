@@ -12,7 +12,7 @@ CONTENT
       end
       
       def migration_exists?(table_name)
-        Dir.glob("#{File.join(destination_root, migration_path)}/[0-9]*_*.rb").grep(/\d+_add_devise_to_#{table_name}.rb$/).first
+        Dir.glob("#{File.join(destination_root, migration_path)}/[0-9]*_*.rb").grep(/\d+_add_paypal_permissions_to_#{table_name}.rb$/).first
       end
       
       def migration_path
