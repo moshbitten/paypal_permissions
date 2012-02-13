@@ -17,26 +17,50 @@ module ActiveRecord
         end
       end
 
-      def generate_model
-        invoke "active_record:model", [name], :migration => false unless model_exists? && behavior == :invoke
+      def generate_paypal_permissions_model
+        invoke "active_record:model", [ name ], :migration => false unless model_exists? && behavior == :invoke
       end
 
       def inject_paypal_permissions_content
         inject_into_class(model_path, class_name, model_contents + <<ACCESSIBLE_FIELDS) if model_exists?
-  attr_accessible :ack, :correlation_id, :request_token, :verifier, :envelope_timestamp, :errors, :raw_response
+  attr_accessible :request_permissions_ack, :request_permissions_correlation_id, :request_permissions_request_token,
+                  :request_permissions_verifier, :request_permissions_envelope_timestamp,
+                  :request_permissions_errors, :request_permissions_raw_response
+                  :request_permissions_callback_ack, :request_permissions_callback_correlation_id, :request_permissions_callback_request_token,
+                  :request_permissions_callback_verifier, :request_permissions_callback_envelope_timestamp,
+                  :request_permissions_callback_errors, :request_permissions_callback_raw_response
+                  :get_access_token_ack, :get_access_token_correlation_id,
+                  :get_access_token_verifier, :get_access_token_envelope_timestamp,
+                  :get_access_token_errors, :get_access_token_raw_response
 ACCESSIBLE_FIELDS
       end
 
       def migration_data
 <<MIGRATION_FIELDS
-      # Paypal Permissions response fields
-      t.string :ack
-      t.string :correlation_id
-      t.string :request_token
-      t.string :verifier
-      t.datetime :envelope_timestamp
-      t.text :errors
-      t.text :raw_response
+      # RequestPermissions response fields
+      t.string :request_permissions_ack
+      t.string :request_permissions_correlation_id
+      t.string :request_permissions_request_token
+      t.datetime :request_permissions_envelope_timestamp
+      t.text :request_permissions_errors
+      t.text :request_permissions_raw_response
+
+      # RequestPermissions callback fields
+      t.string :request_permissions_callback_ack
+      t.string :request_permissions_callback_correlation_id
+      t.string :request_permissions_callback_verifier
+      t.datetime :request_permissions_callback_envelope_timestamp
+      t.text :request_permissions_callback_errors
+      t.text :request_permissions_callback_raw_response
+      
+      # GetAccessToken response fields
+      t.string :get_access_token_ack
+      t.string :get_access_token_correlation_id
+      t.string :get_access_token_request_token
+      t.string :get_access_token_verifier
+      t.datetime :get_access_token_envelope_timestamp
+      t.text :get_access_token_errors
+      t.text :get_access_token_raw_response
 MIGRATION_FIELDS
       end
 
