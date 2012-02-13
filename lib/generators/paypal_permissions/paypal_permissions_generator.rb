@@ -15,7 +15,7 @@ module PaypalPermissions
 
       def insert_paypal_permissions_routes
         if options.routes?
-          route "match '#{plural_name}/request_permissions_callback' => '#{plural_name}#request_permissions_callback', :via => [ :post ]"
+          route "match '#{plural_name}/request_permissions_callback' => '#{plural_name}#request_permissions_callback', :via => [ :post ], :as => :#{plural_name}_request_permissions_callback_url"
           route "resources :#{plural_name}"
         end
       end

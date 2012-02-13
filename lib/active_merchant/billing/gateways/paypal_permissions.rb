@@ -49,6 +49,12 @@ module ActiveMerchant #:nodoc:
       end
 
       public
+      def redirect_user_to_paypal_url token
+        template = test? ? URLS[:test][:redirect_user_to_paypal] : URLS[:live][:redirect_user_to_paypal]
+        template % token
+      end
+
+      public
       def get_access_token_url
         test? ? URLS[:test][:get_access_token] : URLS[:live][:get_access_token]
       end
@@ -62,11 +68,13 @@ module ActiveMerchant #:nodoc:
       URLS = {
         :test => {
           :request_permissions => 'https://svcs.sandbox.paypal.com/Permissions/RequestPermissions',
+          :redirect_user_to_paypal => 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s'
           :get_access_token => 'https://svcs.sandbox.paypal.com/Permissions/GetAccessToken',
           :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
         },
         :live => {
           :request_permissions => 'https://svcs.paypal.com/Permissions/RequestPermissions',
+          :redirect_user_to_paypal => 'https://www.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s'
           :get_access_token => 'https://svcs.paypal.com/Permissions/GetAccessToken',
           :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
         }
