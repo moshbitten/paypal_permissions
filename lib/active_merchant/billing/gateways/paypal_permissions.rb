@@ -68,13 +68,13 @@ module ActiveMerchant #:nodoc:
       URLS = {
         :test => {
           :request_permissions => 'https://svcs.sandbox.paypal.com/Permissions/RequestPermissions',
-          :redirect_user_to_paypal => 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s'
+          :redirect_user_to_paypal => 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s',
           :get_access_token => 'https://svcs.sandbox.paypal.com/Permissions/GetAccessToken',
           :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
         },
         :live => {
           :request_permissions => 'https://svcs.paypal.com/Permissions/RequestPermissions',
-          :redirect_user_to_paypal => 'https://www.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s'
+          :redirect_user_to_paypal => 'https://www.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s',
           :get_access_token => 'https://svcs.paypal.com/Permissions/GetAccessToken',
           :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
         }
