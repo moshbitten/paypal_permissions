@@ -25,10 +25,10 @@ module ActiveRecord
         inject_into_class(model_path, class_name, model_contents + <<ACCESSIBLE_FIELDS) if model_exists?
   attr_accessible :request_permissions_ack, :request_permissions_correlation_id, :request_permissions_request_token,
                   :request_permissions_verifier, :request_permissions_envelope_timestamp,
-                  :request_permissions_errors, :request_permissions_raw_response
+                  :request_permissions_errors, :request_permissions_raw_response,
                   :request_permissions_callback_ack, :request_permissions_callback_correlation_id, :request_permissions_callback_request_token,
                   :request_permissions_callback_verifier, :request_permissions_callback_envelope_timestamp,
-                  :request_permissions_callback_errors, :request_permissions_callback_raw_response
+                  :request_permissions_callback_errors, :request_permissions_callback_raw_response,
                   :get_access_token_ack, :get_access_token_correlation_id,
                   :get_access_token_verifier, :get_access_token_envelope_timestamp,
                   :get_access_token_errors, :get_access_token_raw_response
