@@ -66,7 +66,8 @@ MIGRATION_FIELDS
 
       def indexes
 <<INDEXES
-    add_index :#{table_name}, :request_token
+    add_index :#{table_name}, :request_permissions_request_token
+    add_index :#{table_name}, :get_access_token_request_token
 INDEXES
       end
     end
