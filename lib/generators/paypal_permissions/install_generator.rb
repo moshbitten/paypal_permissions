@@ -3,7 +3,7 @@ module PaypalPermissions
     class InstallGenerator < Rails::Generators::Base
       source_root File.expand_path("../../templates", __FILE__)
 
-      desc "Creates a PaypalPermissions initializer and copies locale files to your application."
+      desc "Creates a PaypalPermissions initializer."
       class_option :orm
 
       def update_configuration
