@@ -35,3 +35,15 @@ This generator will:
 - create a controller.
 - insert routes into config/routes.rb
 
+
+## Rolling your own
+
+### Routes
+
+`match 'paypal_perms/request_permissions_callback' => 'paypal_perms#request_permissions_callback',
+    :via => [ :get ], :as => :paypal_perms_request_permissions_callback`
+`resources :paypal_perms, :only => [ :index, :new, :create, :show ]`
+
+### Models, migrations, and controllers
+
+See the `examples` directory.
