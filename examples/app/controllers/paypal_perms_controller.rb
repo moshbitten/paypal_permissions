@@ -1,8 +1,6 @@
 require 'uri'
 
 class PaypalPermsController < ApplicationController
-  respond_to :html, :json
-
   def index
     render :text => "paypal perms"
   end
@@ -18,11 +16,7 @@ class PaypalPermsController < ApplicationController
       paypal_perms = PaypalPerm.new(:school => school)
       if paypal_perms.save
         g = ::PAYPAL_PERMISSIONS_GATEWAY
-        callback_url = if false && (Rails.env.development? || Rails.env.test?)
-          "http://sandbox.agentfriday.com:3080/paypal_perms/request_permissions_callback"
-        else
-          paypal_perms_request_permissions_callback_url
-        end
+        callback_url = paypal_perms_request_permissions_callback_url
         # Make @paypal_response an instance variable just to facilitate testing
         @paypal_response = g.request_permissions URI.encode(callback_url), 'DIRECT_PAYMENT'
         if @paypal_response[:ack] == 'Success'
@@ -51,26 +45,6 @@ class PaypalPermsController < ApplicationController
       flash[:error] = message
       redirect_to new_paypal_perm_path
     end
-=begin
-{
-  :errors=>[
-    {
-      :parameters=>[
-        "http://test.host/paypal_perms/request_permissions_callback"
-      ],
-      :error_id=>"580028",
-      :domain=>"PLATFORM",
-      :subdomain=>"Application",
-      :severity=>"Error",
-      :category=>"Application",
-      :message=>"The URL http://test.host/paypal_perms/request_permissions_callback is malformed"
-    }
-  ],
-  :timestamp=>"2012-02-13T16:47:04.779-08:00",
-  :ack=>"Failure",
-  :correlation_id=>"c99412dc3ab23"
-}
-=end
   end
 
   # Really, request_permissions_callback should do all this.
@@ -104,7 +78,6 @@ class PaypalPermsController < ApplicationController
   end
 
   def request_permissions_callback
-    # http://sandbox.agentfriday.com:3080/paypal_perms/request_permissions_callback?request_token=AAAAAAAVP73FnqglEbHC&verification_code=x5xKy65PotWILQNKE0ypgg
     perms = PaypalPerm.find_by_request_permissions_request_token params[:request_token]
     if perms
       if perms.valid?
