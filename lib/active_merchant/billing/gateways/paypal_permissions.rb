@@ -16,18 +16,44 @@ module ActiveMerchant #:nodoc:
       public
       def initialize(options = {})
         requires!(options, :login, :password, :signature, :app_id)
+        @login = options.delete(:login)
+        @password = options.delete(:password)
+        @app_id = options.delete(:app_id)
+        @api_signature = options.delete(:signature)
         request_permissions_headers = {
-          'X-PAYPAL-SECURITY-USERID' => options.delete(:login),
-          'X-PAYPAL-SECURITY-PASSWORD' => options.delete(:password),
-          'X-PAYPAL-SECURITY-SIGNATURE' => options.delete(:signature),
-          'X-PAYPAL-APPLICATION-ID' => options.delete(:app_id),
+          'X-PAYPAL-SECURITY-USERID' => @login,
+          'X-PAYPAL-SECURITY-PASSWORD' => @password,
+          'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
+          'X-PAYPAL-APPLICATION-ID' => @app_id,
           'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
           'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
         }
         get_access_token_headers = request_permissions_headers.dup
+        get_basic_personal_data_headers = lambda { |access_token, access_token_verifier|
+          {
+            'X-PAYPAL-SECURITY-USERID' => @login,
+            'X-PAYPAL-SECURITY-PASSWORD' => @password,
+            'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
+            'X-PAYPAL-APPLICATION-ID' => @app_id,
+            'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
+            'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
+          }.update(authorization_header(get_basic_personal_data_url, access_token, access_token_verifier))
+        }
+        get_advanced_personal_data_headers = lambda { |access_token, access_token_verifier|
+          {
+            'X-PAYPAL-SECURITY-USERID' => @login,
+            'X-PAYPAL-SECURITY-PASSWORD' => @password,
+            'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
+            'X-PAYPAL-APPLICATION-ID' => @app_id,
+            'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
+            'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
+          }.update(authorization_header(get_advanced_personal_data_url, access_token, access_token_verifier))
+        }
         @options = {
           :request_permissions_headers => request_permissions_headers,
           :get_access_token_headers => get_access_token_headers,
+          :get_basic_personal_data_headers => get_basic_personal_data_headers,
+          :get_advanced_personal_data_headers => get_advanced_personal_data_headers,
         }.update(options)
         super
       end
@@ -37,8 +63,8 @@ module ActiveMerchant #:nodoc:
         query_string = build_request_permissions_query_string callback_url, scope
         nvp_response = ssl_get "#{request_permissions_url}?#{query_string}", @options[:request_permissions_headers]
         if nvp_response =~ /error\(\d+\)/
-          puts "request: #{request_permissions_url}?#{query_string}\n"
-          puts "nvp_response: #{nvp_response}\n"
+          # puts "request: #{request_permissions_url}?#{query_string}\n"
+          # puts "nvp_response: #{nvp_response}\n"
         end
         response = parse_request_permissions_nvp(nvp_response)
       end
@@ -53,8 +79,8 @@ module ActiveMerchant #:nodoc:
         query_string = build_get_access_token_query_string request_token, request_token_verifier
         nvp_response = ssl_get "#{get_access_token_url}?#{query_string}", @options[:get_access_token_headers]
         if nvp_response =~ /error\(\d+\)/
-          puts "request: #{get_access_token_url}?#{query_string}\n"
-          puts "nvp_response: #{nvp_response}\n"
+          # puts "request: #{get_access_token_url}?#{query_string}\n"
+          # puts "nvp_response: #{nvp_response}\n"
         end
         response = parse_get_access_token_nvp(nvp_response)
       end
@@ -63,6 +89,19 @@ module ActiveMerchant #:nodoc:
       def redirect_user_to_paypal_url token
         template = test? ? URLS[:test][:redirect_user_to_paypal] : URLS[:live][:redirect_user_to_paypal]
         template % token
+      end
+
+      public
+      def get_basic_personal_data(access_token, access_token_verifier)
+        body = build_get_basic_personal_data_post_body(access_token)
+        opts = @options[:get_basic_personal_data_headers].call(access_token, access_token_verifier)
+        # puts "ssl_post: get_basic_personal_data_url:#{get_basic_personal_data_url}\n   body:#{body}\n   opts:#{opts.inspect}"
+        nvp_response = ssl_post(get_basic_personal_data_url, body, opts)
+        if nvp_response =~ /error\(\d+\)/
+          # puts "request: #{get_basic_personal_data_url} post_body:#{body}\n"
+          # puts "nvp_response: #{nvp_response}\n"
+        end
+        response = parse_get_basic_personal_data_nvp(nvp_response)
       end
 
       public
@@ -75,6 +114,16 @@ module ActiveMerchant #:nodoc:
         test? ? URLS[:test][:get_permissions] : URLS[:live][:get_permissions]
       end
 
+      public
+      def get_basic_personal_data_url
+        test? ? URLS[:test][:get_basic_personal_data] : URLS[:live][:get_basic_personal_data]
+      end
+
+      public
+      def get_advanced_personal_data_url
+        test? ? URLS[:test][:get_advanced_personal_data] : URLS[:live][:get_advanced_personal_data]
+      end
+
       private
       URLS = {
         :test => {
@@ -82,12 +131,16 @@ module ActiveMerchant #:nodoc:
           :redirect_user_to_paypal => 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s',
           :get_access_token => 'https://svcs.sandbox.paypal.com/Permissions/GetAccessToken',
           :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
+          :get_basic_personal_data => 'https://svcs.sandbox.paypal.com/Permissions/GetBasicPersonalData',
+          :get_advanced_personal_data => 'https://svcs.sandbox.paypal.com/Permissions/GetAdvancedPersonalData',
         },
         :live => {
           :request_permissions => 'https://svcs.paypal.com/Permissions/RequestPermissions',
           :redirect_user_to_paypal => 'https://www.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s',
           :get_access_token => 'https://svcs.paypal.com/Permissions/GetAccessToken',
-          :get_permissions => 'https://svcs.sandbox.paypal.com/Permissions/GetPermissions',
+          :get_permissions => 'https://www.paypal.com/Permissions/GetPermissions',
+          :get_basic_personal_data => 'https://www.paypal.com/Permissions/GetBasicPersonalData',
+          :get_advanced_personal_data => 'https://www.paypal.com/Permissions/GetAdvancedPersonalData',
         }
       }
 
@@ -112,6 +165,23 @@ module ActiveMerchant #:nodoc:
       private
       def build_get_access_token_query_string(request_token, verifier)
         "requestEnvelope.errorLanguage=en_US&token=#{request_token}&verifier=#{verifier}"
+      end
+
+      private
+      def build_get_basic_personal_data_post_body(token)
+        body = ""
+        [
+          "http://axschema.org/namePerson/first",
+          "http://axschema.org/namePerson/last",
+          "http://axschema.org/contact/email",
+          "http://schema.openid.net/contact/fullname",
+          "http://openid.net/schema/company/name",
+          "http://axschema.org/contact/country/home",
+          "https://www.paypal.com/webapps/auth/schema/payerID",
+        ].each_with_index do |v, idx|
+          body += "attributeList.attribute(#{idx})=#{v}&"
+        end
+        body += "requestEnvelope.errorLanguage=en_US"
       end
 
 =begin
@@ -268,20 +338,117 @@ module ActiveMerchant #:nodoc:
         response
       end
 
-      private
-      def authentication_header url
-        timestamp = Time.now.to_i
-        signature = authentication_signature url, timestamp
-        { 'X-PAYPAL-AUTHORIZATION' => "token=#{access_token}, signature=#{signature}, timeStamp=#{timestamp}" }
+      def parse_get_basic_personal_data_nvp(nvp)
+        # puts "parse_get_basic_personal_data_nvp: #{nvp}"
+        response = {
+          :errors => [
+          ],
+          :personal_data => {
+          }
+        }
+        idx = nil
+        key = nil
+        pairs = nvp.split "&"
+        pairs.each do |pair|
+          n,v = pair.split "="
+          n = CGI.unescape n
+          v = CGI.unescape v
+          case n
+          when "responseEnvelope.timestamp"
+            response[:timestamp] = v
+          when "responseEnvelope.ack"
+            response[:ack] = v
+          when "responseEnvelope.correlationId"
+            response[:correlation_id] = v
+          when "responseEnvelope.build"
+            # do nothing
+
+          when /response\.personalData\((\d+)\)\.personalDataKey/
+            idx = $1
+            case v
+            when "http://axschema.org/contact/country/home"
+              key = :country
+            when "http://axschema.org/contact/email"
+              key = :email
+            when "http://axschema.org/namePerson/first"
+              key = :first_name
+            when "http://axschema.org/namePerson/last"
+              key = :last_name
+            when "http://schema.openid.net/contact/fullname"
+              key = :full_name
+            when "https://www.paypal.com/webapps/auth/schema/payerID"
+              key = :payer_id
+            end
+
+          when /response\.personalData\((\d+)\)\.personalDataValue/
+            if $1 == idx
+              response[:personal_data][key] = v
+            else
+              # puts "idx:#{idx} is out of sync with $1:#{$1} for key:#{key}"
+            end
+
+          when /^error\((?<error_idx>\d+)\)/
+            error_idx = error_idx.to_i
+            if response[:errors].length <= error_idx
+              response[:errors] << { :parameters => [] }
+              raise if response[:errors].length <= error_idx
+            end
+            case n
+            when /^error\(\d+\)\.errorId$/
+              response[:errors][error_idx][:error_id] = v
+=begin
+# Client should implement these with logging. PayPal doesn't distinguish
+# between errors which can be corrected by the user and errors which need
+# to be corrected by a developer or merchant, say, in configuration.
+#             case v
+#             when "520002"
+#             when
+=end            
+            when /^error\(\d+\)\.domain$/
+              response[:errors][error_idx][:domain] = v
+            when /^error\(\d+\)\.subdomain$/
+              response[:errors][error_idx][:subdomain] = v
+            when /^error\(\d+\)\.severity$/
+              response[:errors][error_idx][:severity] = v
+            when /^error\(\d+\)\.category$/
+              response[:errors][error_idx][:category] = v
+            when /^error\(\d+\)\.message$/
+              response[:errors][error_idx][:message] = v
+            when /^error\(\d+\)\.parameter\((?<parameter_idx>\d+)\)$/
+              parameter_idx = parameter_idx.to_i
+              if response[:errors][error_idx][:parameters].length <= parameter_idx
+                response[:errors][error_idx][:parameters] << {}
+                raise if response[:errors][error_idx][:parameters].length <= parameter_idx
+              end
+              response[:errors][error_idx][:parameters][parameter_idx] = v
+            end
+          end
+        end
+        response
       end
 
-      private
-      def authentication_signature url, timestamp
+=begin
+Any API call can be submit through a third party process with your credentials. The merchant would need to add your API username to your account and then you submit the API call with your credentials and include the variable "SUBJECT" and set the value to be the merchants e-mail address. 
+=end
+
+      public
+      def authorization_header url, access_token, access_token_verifier
+        timestamp = Time.now.to_i.to_s
+        signature = authorization_signature url, timestamp, access_token, access_token_verifier
+        { 'X-PP-AUTHORIZATION' => "token=#{access_token},signature=#{signature},timestamp=#{timestamp}" }
+      end
+
+      public
+      def authorization_signature url, timestamp, access_token, access_token_verifier
         # no query params, but if there were, this is where they'd go
         query_params = {}
-        key = [ password, verifier ].join("&")
+        key = [
+          URI.encode(@password),
+          URI.encode(access_token_verifier),
+        ].join("&")
+
         params = query_params.dup.merge({
-          "oauth_consumer_key" => @options[:request_permissions_headers]['X-PAYPAL-SECURITY-USERID'],
+          "oauth_consumer_key" => @login,
           "oauth_version" => "1.0",
           "oauth_signature_method" => "HMAC-SHA1",
           "oauth_token" => access_token,
@@ -289,47 +456,17 @@ module ActiveMerchant #:nodoc:
         })
         sorted_params = Hash[params.sort]
         sorted_query_string = sorted_params.to_query
-        data = [ "POST", url, sorted_query_string ].join("&")  # ? "https://api-3t.sandbox.paypal.com/nvp"
-        digest = OpenSSL::Digest::Digest.new('sha1')
-        OpenSSL::HMAC.digest(digest, key, data)
-        enc = Base64.encode64('Send reinforcements')  # encode per RFC 2045 (not 4648
-      end
-        
+        # puts "sorted_query_string: #{sorted_query_string}"
 
-=begin
-	public static Map getAuthHeader(String apiUserName, String apiPassword,
-			String accessToken, String tokenSecret, HTTPMethod httpMethod,
-			String scriptURI,Map queryParams) throws OAuthException {
-		
-		Map headers=new HashMap();
-		String consumerKey = apiUserName;
-		String consumerSecretStr = apiPassword;
-		String time = String.valueOf(System.currentTimeMillis()/1000);
-		
-		OAuthSignature oauth = new OAuthSignature(consumerKey,consumerSecretStr);
-		if(HTTPMethod.GET.equals(httpMethod) && queryParams != null){
-			Iterator itr = queryParams.entrySet().iterator();
-		    while (itr.hasNext()) {
-		        Map.Entry param = (Map.Entry)itr.next();
-		        String key=(String)param.getKey();
-		        String value=(String)param.getValue();
-		        oauth.addParameter(key,value);
-		    }
-		  }	
-		oauth.setToken(accessToken);
-		oauth.setTokenSecret(tokenSecret);
-		oauth.setHTTPMethod(httpMethod);
-		oauth.setTokenTimestamp(time);
-		oauth.setRequestURI(scriptURI);
-		//Compute Signature
-		String sig = oauth.computeV1Signature();
-		
-		headers.put("Signature", sig);
-		headers.put("TimeStamp", time);
-		return headers;
-		
-	}
-=end
+        base = [
+          "POST",
+          URI.encode(url),
+          URI.encode(sorted_query_string)
+        ].join("&")
+
+        hexdigest = OpenSSL::HMAC.hexdigest('sha1', key, base)
+        Base64.encode64(hexdigest).chomp
+      end
 
       private
       def setup_purchase(options)
