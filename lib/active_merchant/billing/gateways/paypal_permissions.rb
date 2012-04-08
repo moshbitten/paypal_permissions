@@ -3,11 +3,14 @@ require 'uri'
 require 'cgi'
 require 'openssl'
 require 'base64'
+require 'active_merchant/billing/gateways/paypal_permissions/x_pp_authorization'
 
 
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class PaypalPermissionsGateway < Gateway # :nodoc
+      include XPPAuthorization
+
       public
       def self.setup
         yield self
@@ -37,7 +40,7 @@ module ActiveMerchant #:nodoc:
             'X-PAYPAL-APPLICATION-ID' => @app_id,
             'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
             'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
-          }.update(authorization_header(get_basic_personal_data_url, access_token, access_token_verifier))
+          }.update(x_pp_authorization_header(get_basic_personal_data_url, access_token, access_token_verifier))
         }
         get_advanced_personal_data_headers = lambda { |access_token, access_token_verifier|
           {
@@ -47,7 +50,7 @@ module ActiveMerchant #:nodoc:
             'X-PAYPAL-APPLICATION-ID' => @app_id,
             'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
             'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
-          }.update(authorization_header(get_advanced_personal_data_url, access_token, access_token_verifier))
+          }.update(x_pp_authorization_header(get_advanced_personal_data_url, access_token, access_token_verifier))
         }
         @options = {
           :request_permissions_headers => request_permissions_headers,
@@ -91,17 +94,51 @@ module ActiveMerchant #:nodoc:
         template % token
       end
 
+      def basic_personal_data_mappings
+        {
+          "http://axschema.org/contact/country/home" => :country,
+          "http://axschema.org/contact/email" => :email,
+          "http://axschema.org/namePerson/first" => :first_name,
+          "http://axschema.org/namePerson/last" => :last_name,
+          "http://schema.openid.net/contact/fullname" => :full_name,
+          "https://www.paypal.com/webapps/auth/schema/payerID" => :payer_id,
+        }
+      end
+
+      def advanced_personal_data_mappings
+        {
+          "http://axschema.org/birthDate" => :birthdate,
+          "http://schema.openid.net/contact/street1" => :street1,
+          "http://schema.openid.net/contact/street2" => :street2,
+          "http://axschema.org/contact/city/home" => :city,
+          "http://axschema.org/contact/state/home" => :state,
+          "http://axschema.org/contact/postalCode/home" => :postal_code,
+          "http://axschema.org/contact/phone/default" => :phone,
+        }
+      end
+
       public
       def get_basic_personal_data(access_token, access_token_verifier)
-        body = build_get_basic_personal_data_post_body(access_token)
+        body = personal_data_post_body(basic_personal_data_mappings)
         opts = @options[:get_basic_personal_data_headers].call(access_token, access_token_verifier)
-        # puts "ssl_post: get_basic_personal_data_url:#{get_basic_personal_data_url}\n   body:#{body}\n   opts:#{opts.inspect}"
         nvp_response = ssl_post(get_basic_personal_data_url, body, opts)
         if nvp_response =~ /error\(\d+\)/
           # puts "request: #{get_basic_personal_data_url} post_body:#{body}\n"
           # puts "nvp_response: #{nvp_response}\n"
         end
-        response = parse_get_basic_personal_data_nvp(nvp_response)
+        response = parse_personal_data_nvp(nvp_response, basic_personal_data_mappings)
+      end
+
+      public
+      def get_advanced_personal_data(access_token, access_token_verifier)
+        body = personal_data_post_body(advanced_personal_data_mappings)
+        opts = @options[:get_advanced_personal_data_headers].call(access_token, access_token_verifier)
+        nvp_response = ssl_post(get_advanced_personal_data_url, body, opts)
+        if nvp_response =~ /error\(\d+\)/
+          # puts "request: #{get_advanced_personal_data_url} post_body:#{body}\n"
+          # puts "nvp_response: #{nvp_response}\n"
+        end
+        response = parse_personal_data_nvp(nvp_response, advanced_personal_data_mappings)
       end
 
       public
@@ -168,29 +205,13 @@ module ActiveMerchant #:nodoc:
       end
 
       private
-      def build_get_basic_personal_data_post_body(token)
+      def personal_data_post_body(personal_data_mappings)
         body = ""
-        [
-          "http://axschema.org/namePerson/first",
-          "http://axschema.org/namePerson/last",
-          "http://axschema.org/contact/email",
-          "http://schema.openid.net/contact/fullname",
-          "http://openid.net/schema/company/name",
-          "http://axschema.org/contact/country/home",
-          "https://www.paypal.com/webapps/auth/schema/payerID",
-        ].each_with_index do |v, idx|
+        personal_data_mappings.keys.each_with_index do |v, idx|
           body += "attributeList.attribute(#{idx})=#{v}&"
         end
         body += "requestEnvelope.errorLanguage=en_US"
       end
-
-=begin
-      private
-      def setup_request_permission
-        callback
-        scope
-      end
-=end
 
       private
       def parse_request_permissions_nvp(nvp)
@@ -224,8 +245,8 @@ module ActiveMerchant #:nodoc:
             # do nothing
           when "token"
             response[:token] = v
-          when /^error\((?<error_idx>\d+)\)/
-            error_idx = error_idx.to_i
+          when /^error\((\d+)\)/
+            error_idx = $1.to_i
             if response[:errors].length <= error_idx
               response[:errors] << { :parameters => [] }
               raise if response[:errors].length <= error_idx
@@ -251,8 +272,8 @@ module ActiveMerchant #:nodoc:
               response[:errors][error_idx][:category] = v
             when /^error\(\d+\)\.message$/
               response[:errors][error_idx][:message] = v
-            when /^error\(\d+\)\.parameter\((?<parameter_idx>\d+)\)$/
-              parameter_idx = parameter_idx.to_i
+            when /^error\(\d+\)\.parameter\((\d+)\)$/
+              parameter_idx = $1.to_i
               if response[:errors][error_idx][:parameters].length <= parameter_idx
                 response[:errors][error_idx][:parameters] << {}
                 raise if response[:errors][error_idx][:parameters].length <= parameter_idx
@@ -298,8 +319,8 @@ module ActiveMerchant #:nodoc:
             response[:token] = v
           when "tokenSecret"
             response[:tokenSecret] = v
-          when /^error\((?<error_idx>\d+)\)/
-            error_idx = error_idx.to_i
+          when /^error\((\d+)\)/
+            error_idx = $1.to_i
             if response[:errors].length <= error_idx
               response[:errors] << { :parameters => [] }
               raise if response[:errors].length <= error_idx
@@ -325,8 +346,8 @@ module ActiveMerchant #:nodoc:
               response[:errors][error_idx][:category] = v
             when /^error\(\d+\)\.message$/
               response[:errors][error_idx][:message] = v
-            when /^error\(\d+\)\.parameter\((?<parameter_idx>\d+)\)$/
-              parameter_idx = parameter_idx.to_i
+            when /^error\(\d+\)\.parameter\((\d+)\)$/
+              parameter_idx = $1.to_i
               if response[:errors][error_idx][:parameters].length <= parameter_idx
                 response[:errors][error_idx][:parameters] << {}
                 raise if response[:errors][error_idx][:parameters].length <= parameter_idx
@@ -338,19 +359,22 @@ module ActiveMerchant #:nodoc:
         response
       end
 
-      def parse_get_basic_personal_data_nvp(nvp)
-        # puts "parse_get_basic_personal_data_nvp: #{nvp}"
+      private
+      def parse_personal_data_nvp(nvp, personal_data_mappings)
         response = {
+          :raw_response => nvp,
           :errors => [
           ],
           :personal_data => {
           }
         }
-        idx = nil
+begin
         key = nil
+        key_idx = nil
         pairs = nvp.split "&"
         pairs.each do |pair|
           n,v = pair.split "="
+          v = "" if v.nil?
           n = CGI.unescape n
           v = CGI.unescape v
           case n
@@ -364,7 +388,9 @@ module ActiveMerchant #:nodoc:
             # do nothing
 
           when /response\.personalData\((\d+)\)\.personalDataKey/
-            idx = $1
+            key_idx = $1.to_i
+            key = personal_data_mappings[v]
+=begin
             case v
             when "http://axschema.org/contact/country/home"
               key = :country
@@ -379,16 +405,20 @@ module ActiveMerchant #:nodoc:
             when "https://www.paypal.com/webapps/auth/schema/payerID"
               key = :payer_id
             end
+=end
 
           when /response\.personalData\((\d+)\)\.personalDataValue/
-            if $1 == idx
-              response[:personal_data][key] = v
+            val_idx = $1.to_i
+            if !key
+              # puts "key:#{key} is nil for v:#{v}"
+            elsif val_idx != key_idx
+              # puts "key_idx:#{key_idx} is out of sync with val_idx:#{val_idx} for key:#{key}"
             else
-              # puts "idx:#{idx} is out of sync with $1:#{$1} for key:#{key}"
+              response[:personal_data][key] = v
             end
 
-          when /^error\((?<error_idx>\d+)\)/
-            error_idx = error_idx.to_i
+          when /^error\((\d+)\)/
+            error_idx = $1.to_i
             if response[:errors].length <= error_idx
               response[:errors] << { :parameters => [] }
               raise if response[:errors].length <= error_idx
@@ -414,8 +444,8 @@ module ActiveMerchant #:nodoc:
               response[:errors][error_idx][:category] = v
             when /^error\(\d+\)\.message$/
               response[:errors][error_idx][:message] = v
-            when /^error\(\d+\)\.parameter\((?<parameter_idx>\d+)\)$/
-              parameter_idx = parameter_idx.to_i
+            when /^error\(\d+\)\.parameter\((\d+)\)$/
+              parameter_idx = $1.to_i
               if response[:errors][error_idx][:parameters].length <= parameter_idx
                 response[:errors][error_idx][:parameters] << {}
                 raise if response[:errors][error_idx][:parameters].length <= parameter_idx
@@ -424,54 +454,18 @@ module ActiveMerchant #:nodoc:
             end
           end
         end
+rescue
+  response[:errors][:unknown_error] << nvp.inspect
+end
         response
       end
 
 =begin
-Any API call can be submit through a third party process with your credentials. The merchant would need to add your API username to your account and then you submit the API call with your credentials and include the variable "SUBJECT" and set the value to be the merchants e-mail address. 
-=end
-
-      public
-      def authorization_header url, access_token, access_token_verifier
-        timestamp = Time.now.to_i.to_s
-        signature = authorization_signature url, timestamp, access_token, access_token_verifier
-        { 'X-PP-AUTHORIZATION' => "token=#{access_token},signature=#{signature},timestamp=#{timestamp}" }
-      end
-
-      public
-      def authorization_signature url, timestamp, access_token, access_token_verifier
-        # no query params, but if there were, this is where they'd go
-        query_params = {}
-        key = [
-          URI.encode(@password),
-          URI.encode(access_token_verifier),
-        ].join("&")
-
-        params = query_params.dup.merge({
-          "oauth_consumer_key" => @login,
-          "oauth_version" => "1.0",
-          "oauth_signature_method" => "HMAC-SHA1",
-          "oauth_token" => access_token,
-          "oauth_timestamp" => timestamp,
-        })
-        sorted_params = Hash[params.sort]
-        sorted_query_string = sorted_params.to_query
-        # puts "sorted_query_string: #{sorted_query_string}"
-
-        base = [
-          "POST",
-          URI.encode(url),
-          URI.encode(sorted_query_string)
-        ].join("&")
-
-        hexdigest = OpenSSL::HMAC.hexdigest('sha1', key, base)
-        Base64.encode64(hexdigest).chomp
-      end
-
       private
       def setup_purchase(options)
         commit('Pay', build_adaptive_payment_pay_request(options))
       end
+=end
     end
   end
 end
