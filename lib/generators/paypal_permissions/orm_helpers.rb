@@ -3,7 +3,6 @@ module PaypalPermissions
     module OrmHelpers
       def model_contents
 <<-CONTENT
-  # validates :request_permissions_ack, :presence => true
 CONTENT
       end
 

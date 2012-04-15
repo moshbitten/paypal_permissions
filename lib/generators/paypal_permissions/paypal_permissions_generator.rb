@@ -15,8 +15,11 @@ module PaypalPermissions
 
       def insert_paypal_permissions_routes
         if options.routes?
-          route "match '#{plural_name}/request_permissions_callback' => '#{plural_name}#request_permissions_callback', :via => [ :post ], :as => :#{plural_name}_request_permissions_callback_url"
+          # The request_permissions_callback route needs to be *first* in the routes.rb file,
+          # but the generator inserts them at the top of the file, so call them in reverse order.
+
           route "resources :#{plural_name}"
+          route "match '#{plural_name}/request_permissions_callback' => '#{plural_name}#request_permissions_callback', :via => [ :get ], :as => :#{plural_name}_request_permissions_callback"
         end
       end
     end

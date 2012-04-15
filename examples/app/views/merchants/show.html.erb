@@ -1,0 +1,20 @@
+<% if flash[:error].present? %>
+  <%= flash[:error] %>
+<% end %>
+
+<p>
+  Hello merchant.
+</p>
+
+<% if @merchant.get_access_token_access_token.present? %>
+  <p>
+    We're good to go. I have an access token so I can process payments for you.
+  </p>
+<% else %>
+  <p>
+    Before I can process payments for you, you'll need give me permission to do so at PayPal.
+  </p>
+  <%= form_for @merchant do |form| %>
+    <%= form.submit "Authorize at PayPal" %>
+  <% end %>
+<% end %>

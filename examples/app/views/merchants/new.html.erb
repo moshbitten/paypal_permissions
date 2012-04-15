@@ -1,0 +1,15 @@
+<% if flash[:error].present? %>
+  <%= flash[:error] %>
+<% end %>
+
+<p>
+  Thanks for signing up as a merchant on my web site!
+</p>
+
+<p>
+  Before I can process payments for you, you'll need give me permission to do so at PayPal.
+</p>
+
+<%= form_for @merchant do |form| %>
+  <%= form.submit "Authorize at PayPal" %>
+<% end %>

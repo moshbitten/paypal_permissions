@@ -23,52 +23,16 @@ module ActiveRecord
 
       def inject_paypal_permissions_content
         inject_into_class(model_path, class_name, model_contents + <<ACCESSIBLE_FIELDS) if model_exists?
-  attr_accessible :request_permissions_ack, :request_permissions_correlation_id, :request_permissions_request_token,
-                  :request_permissions_verifier, :request_permissions_envelope_timestamp,
-                  :request_permissions_errors, :request_permissions_raw_response,
-                  :request_permissions_callback_ack, :request_permissions_callback_correlation_id, :request_permissions_callback_request_token,
-                  :request_permissions_callback_verifier, :request_permissions_callback_envelope_timestamp,
-                  :request_permissions_callback_errors, :request_permissions_callback_raw_response,
-                  :get_access_token_ack, :get_access_token_correlation_id, :get_access_token_access_token,
-                  :get_access_token_verifier, :get_access_token_envelope_timestamp,
-                  :get_access_token_errors, :get_access_token_raw_response
+  attr_accessible :ppp_access_token, :ppp_access_token_verifier
 ACCESSIBLE_FIELDS
       end
 
       def migration_data
 <<MIGRATION_FIELDS
-      # RequestPermissions response fields
-      t.string :request_permissions_ack
-      t.string :request_permissions_correlation_id
-      t.string :request_permissions_request_token
-      t.datetime :request_permissions_envelope_timestamp
-      t.text :request_permissions_errors
-      t.text :request_permissions_raw_response
-
-      # RequestPermissions callback fields
-      t.string :request_permissions_callback_ack
-      t.string :request_permissions_callback_correlation_id
-      t.string :request_permissions_callback_verifier
-      t.datetime :request_permissions_callback_envelope_timestamp
-      t.text :request_permissions_callback_errors
-      t.text :request_permissions_callback_raw_response
-      
       # GetAccessToken response fields
-      t.string :get_access_token_ack
-      t.string :get_access_token_correlation_id
-      t.string :get_access_token_access_token
-      t.string :get_access_token_verifier
-      t.datetime :get_access_token_envelope_timestamp
-      t.text :get_access_token_errors
-      t.text :get_access_token_raw_response
+      t.string :ppp_access_token
+      t.string :ppp_access_token_verifier
 MIGRATION_FIELDS
-      end
-
-      def indexes
-<<INDEXES
-    add_index :#{table_name}, :request_permissions_request_token
-    add_index :#{table_name}, :get_access_token_access_token
-INDEXES
       end
     end
   end

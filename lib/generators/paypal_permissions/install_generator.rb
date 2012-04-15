@@ -10,6 +10,7 @@ module PaypalPermissions
         dev_test_config = <<-DEV_TEST_CONFIG
 #{Rails.application.class.name.split('::').first}::Application.configure do
   config.after_initialize do
+    ActiveMerchant::Billing::Base.mode = :test
     permissions_options = {
       :login => 'TODO: your PayPal sandbox caller login',
       :password => 'TODO: your PayPal sandbox caller password',
@@ -24,6 +25,7 @@ end
         prod_config = <<-PROD_CONFIG
 #{Rails.application.class.name.split('::').first}::Application.configure do
   config.after_initialize do
+    ActiveMerchant::Billing::Base.mode = :production
     permissions_options = {
       :login => 'TODO: your PayPal live caller login',
       :password => 'TODO: your PayPal live caller password',
@@ -54,11 +56,13 @@ end
       end
 
       def copy_initializer
-        template "paypal_permissions.rb", "config/initializers/paypal_permissions.rb"
+        # Nothing in the initializer yet, but once there is, just uncomment the following.
+        # template "paypal_permissions.rb", "config/initializers/paypal_permissions.rb"
       end
 
       def copy_locale
-        copy_file "../../../config/locales/en.yml", "config/locales/paypal_permissions.en.yml"
+        # Nothing in the locales file yet, but once there is, just uncomment the following.
+        # copy_file "../../../config/locales/en.yml", "config/locales/paypal_permissions.en.yml"
       end
 
       def show_readme
