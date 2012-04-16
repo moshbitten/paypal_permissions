@@ -10,6 +10,8 @@ require 'active_merchant/billing/gateways/paypal_permissions/x_pp_authorization'
 
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
+    autoload :CreditCardFormatting, 'active_merchant/billing/credit_card_formatting'
+
     class PaypalPermissionsGateway < Gateway # :nodoc
       include XPPAuthorization
 
