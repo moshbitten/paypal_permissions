@@ -1,6 +1,6 @@
 require 'active_merchant'
 require 'active_merchant/billing'
-require 'active_merchant/billing/gateways'
+require 'active_merchant/billing/gateway'
 require 'uri'
 require 'cgi'
 require 'openssl'

@@ -1,10 +1,6 @@
-require 'active_merchant'
-require 'active_merchant/billing'
-require 'active_merchant/billing/gateway'
-
 module ActiveMerchant
   module Billing
-    # autoload :Gateway, 'active_merchant/billing/gateway'
+    autoload :Gateway, 'active_merchant/billing/gateway'
 
     Dir[File.dirname(__FILE__) + '/gateways/**/*.rb'].each do |f|
       # Get camelized class name
