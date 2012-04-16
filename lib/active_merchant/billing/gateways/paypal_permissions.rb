@@ -1,4 +1,7 @@
+# load the active_merchant modules before defining them which would result in unitialized constants otherwise
 require 'active_merchant'
+require 'active_merchant/billing'
+require 'active_merchant/billing/gateways'
 require 'uri'
 require 'cgi'
 require 'openssl'
