@@ -34,6 +34,10 @@ ACCESSIBLE_FIELDS
       t.string :ppp_access_token_verifier
 MIGRATION_FIELDS
       end
+
+      def indexes
+<<INDEXES
+INDEXES
     end
   end
 end
