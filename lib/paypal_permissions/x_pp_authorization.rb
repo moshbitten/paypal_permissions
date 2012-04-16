@@ -1,3 +1,6 @@
+require 'openssl'
+require 'base64'
+
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     module XPPAuthorization

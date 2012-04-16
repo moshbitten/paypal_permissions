@@ -1,2 +1,2 @@
 require "paypal_permissions/version"
-require "active_merchant/billing/gateways/paypal_permissions"
+require "paypal_permissions/paypal_permissions_gateway"
