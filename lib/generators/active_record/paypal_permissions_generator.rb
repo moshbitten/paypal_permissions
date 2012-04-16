@@ -38,6 +38,7 @@ MIGRATION_FIELDS
       def indexes
 <<INDEXES
 INDEXES
+      end
     end
   end
 end
