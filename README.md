@@ -1,16 +1,24 @@
 # PayPal Permissions
 
-## Assumptions
+## Dependencies
 
-You have the ActiveMerchant gem installed.
+The PayPal Permissions gem relies on ActiveMerchant.
+
+
+## Install
+
+In your Gemfile:
+
+`gem paypal_permissions`
+
+After installing the gem:
 
 `rails generate paypal_permissions:install`
 
 Running the install generator will:
 
 - update your config/environments/{development,test,production}.rb files. You must edit these files with your PayPal credentials.
-<!-- - create a currently useless config/initializers/paypal_permissions.rb initializer. -->
-<!-- - create a currently useless config/locales/paypal_permissions.en.yml local file. -->
+- create an initializer in config/initializers/paypal_permissions.rb
 
 
 ## Optionally generate resources
@@ -20,7 +28,7 @@ Running the install generator will:
 This generator will:
 
 - create a migration which updates the table for an existing model or creates a new table along with a new model. ActiveRecord is the only supported orm.
-- create a controller.
+- create a controller. For help, take a look at the example controller in `examples/app/controllers/merchants_controller.rb`.
 - insert routes into config/routes.rb. Make sure that the request_permissions_callback route is inserted before the resources routes.
 
 For example, if you plan to query PayPal using getBasicPersonalData and getAdvancedPersonalData, you might generate a merchant model like:
@@ -28,9 +36,11 @@ For example, if you plan to query PayPal using getBasicPersonalData and getAdvan
 `rails generate paypal_permissions merchant email:string first_name:string last_name:string full_name:string country:string payer_id:string street1:string street2:string city:string state:string postal_code_string phone:string birth_date:string`
 `bundle exec rake db:migrate`
 
-## Rolling your own
+## Rolling your own resources
 
 ### Routes
+
+You must provide a callback route for PayPal. Again, for help, see `examples/app/controllers/merchants_controller.rb`.
 
 `match 'paypal_perms/request_permissions_callback' => 'paypal_perms#request_permissions_callback',
     :via => [ :get ], :as => :paypal_perms_request_permissions_callback`
@@ -38,4 +48,6 @@ For example, if you plan to query PayPal using getBasicPersonalData and getAdvan
 
 ### Models, migrations, and controllers
 
-See the `examples` directory.
+The resources generator will populate your model and migration, as well as create an empty controller.
+
+For more help, see the `examples` directory.
