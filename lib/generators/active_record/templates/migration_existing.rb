@@ -1,5 +1,5 @@
 class AddPaypalPermissionsTo<%= table_name.camelize %> < ActiveRecord::Migration
-  def self.up
+  def self.change
     change_table(:<%= table_name %>) do |t|
 <% attributes.each do |attribute| -%>
       t.<%= attribute.type %> :<%= attribute.name %>
@@ -12,12 +12,5 @@ class AddPaypalPermissionsTo<%= table_name.camelize %> < ActiveRecord::Migration
     end
 
 <%= indexes -%>
-  end
-
-  def self.down
-    # We won't make assumptions about how to roll back a migration to a previously existing model.
-    # If you'd like to be able to roll back, remove the ActiveRecord::IrreversibleMigration line
-    # and make your edits below.
-    raise ActiveRecord::IrreversibleMigration
   end
 end

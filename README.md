@@ -2,7 +2,10 @@
 
 ## Dependencies
 
-The PayPal Permissions gem relies on ActiveMerchant.
+Rails 3.1 or later.
+
+The PayPal Permissions gem installs ActiveMerchant if it's not already in place.
+PayPal Permissions is known to work with ActiveMerchant 1.21.
 
 
 ## Install
