@@ -40,7 +40,7 @@ module ActiveMerchant #:nodoc:
             'X-PAYPAL-APPLICATION-ID' => @app_id,
             'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
             'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
-          }.update(x_pp_authorization_header(get_basic_personal_data_url, access_token, access_token_verifier))
+          }.update(x_pp_authorization_header(get_basic_personal_data_url, @login, @password, access_token, access_token_verifier))
         }
         get_advanced_personal_data_headers = lambda { |access_token, access_token_verifier|
           {
@@ -50,7 +50,7 @@ module ActiveMerchant #:nodoc:
             'X-PAYPAL-APPLICATION-ID' => @app_id,
             'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
             'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
-          }.update(x_pp_authorization_header(get_advanced_personal_data_url, access_token, access_token_verifier))
+          }.update(x_pp_authorization_header(get_advanced_personal_data_url, @login, @password, access_token, access_token_verifier))
         }
         @options = {
           :request_permissions_headers => request_permissions_headers,
