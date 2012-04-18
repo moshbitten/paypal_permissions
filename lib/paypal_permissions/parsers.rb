@@ -1,0 +1,5 @@
+require 'paypal_permissions/parsers/common'
+require 'paypal_permissions/parsers/request_permissions'
+require 'paypal_permissions/parsers/get_access_token'
+require 'paypal_permissions/parsers/get_basic_personal_data'
+require 'paypal_permissions/parsers/get_advanced_personal_data'

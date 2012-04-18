@@ -56,7 +56,6 @@ end
       end
 
       def copy_initializer
-        # Nothing in the initializer yet, but once there is, just uncomment the following.
         template "paypal_permissions.rb", "config/initializers/paypal_permissions.rb"
       end
 
