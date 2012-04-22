@@ -34,7 +34,7 @@ module ActiveMerchant
 
             def process_error_pair n, v
               n =~ /^error\((\d+)\)/
-              error_idx = $1
+              error_idx = $1.to_i
               process_error_idx error_idx
 
               case n
@@ -51,7 +51,7 @@ module ActiveMerchant
               when /^error\(\d+\)\.message$/
                 @response[:errors][error_idx][:message] = v
               when /^error\(\d+\)\.parameter\((\d+)\)$/
-                parameter_idx = $1.to_i
+                parameter_idx = $1.to_i  # yes, $1, I've escaped the parentheses around the first \d match
                 if @response[:errors][error_idx][:parameters].length <= parameter_idx
                   @response[:errors][error_idx][:parameters] << {}
                   raise if @response[:errors][error_idx][:parameters].length <= parameter_idx
