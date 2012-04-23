@@ -10,6 +10,7 @@ module ActiveMerchant #:nodoc:
               pairs = nvp_response.split "&"
               pairs.each do |pair|
                 n,v = pair.split "="
+                v ||= ""
                 n = CGI.unescape n
                 v = CGI.unescape v
 

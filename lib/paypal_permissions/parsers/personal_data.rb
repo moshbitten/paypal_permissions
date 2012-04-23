@@ -9,9 +9,12 @@ module ActiveMerchant #:nodoc:
 
               @response[:personal_data] = {}
 
+              key = nil
+              key_idx = nil
               pairs = nvp_response.split "&"
               pairs.each do |pair|
                 n,v = pair.split "="
+                v ||= ""
                 n = CGI.unescape n
                 v = CGI.unescape v
 
@@ -28,7 +31,7 @@ module ActiveMerchant #:nodoc:
 
                 when /response\.personalData\((\d+)\)\.personalDataValue/
                   val_idx = $1.to_i
-                  raise unless key && val_idx != key_idx
+                  raise unless key && val_idx == key_idx
                   @response[:personal_data][key] = v
 
                 # error with index
@@ -37,6 +40,7 @@ module ActiveMerchant #:nodoc:
 
                 end
               end
+              @response
             end
           end
         end
