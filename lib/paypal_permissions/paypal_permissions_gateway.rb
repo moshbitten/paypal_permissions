@@ -3,7 +3,6 @@ require 'active_merchant/billing'
 require 'active_merchant/billing/gateway'
 require 'paypal_permissions/parsers'
 require 'paypal_permissions/x_pp_authorization'
-require 'uri'
 require 'cgi'
 
 
@@ -36,9 +35,9 @@ module ActiveMerchant #:nodoc:
         get_access_token_headers = request_permissions_headers.dup
         get_basic_personal_data_headers = lambda { |access_token, access_token_verifier|
           {
-            'X-PAYPAL-SECURITY-USERID' => @login,
-            'X-PAYPAL-SECURITY-PASSWORD' => @password,
-            'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
+            #'X-PAYPAL-SECURITY-USERID' => @login,
+            #'X-PAYPAL-SECURITY-PASSWORD' => @password,
+            #'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
             'X-PAYPAL-APPLICATION-ID' => @app_id,
             'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
             'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
@@ -46,9 +45,9 @@ module ActiveMerchant #:nodoc:
         }
         get_advanced_personal_data_headers = lambda { |access_token, access_token_verifier|
           {
-            'X-PAYPAL-SECURITY-USERID' => @login,
-            'X-PAYPAL-SECURITY-PASSWORD' => @password,
-            'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
+            #'X-PAYPAL-SECURITY-USERID' => @login,
+            #'X-PAYPAL-SECURITY-PASSWORD' => @password,
+            #'X-PAYPAL-SECURITY-SIGNATURE' => @api_signature,
             'X-PAYPAL-APPLICATION-ID' => @app_id,
             'X-PAYPAL-REQUEST-DATA-FORMAT' => 'NV',
             'X-PAYPAL-RESPONSE-DATA-FORMAT' => 'NV',
@@ -163,7 +162,7 @@ module ActiveMerchant #:nodoc:
       private
       def build_request_permissions_query_string(callback_url, scope)
         scopes_query = build_scopes_query_string(scope)
-        "requestEnvelope.errorLanguage=en_US&#{scopes_query}&callback=#{URI.encode(callback_url)}"
+        "requestEnvelope.errorLanguage=en_US&#{scopes_query}&callback=#{CGI.escape(callback_url)}"
       end
 
       private
@@ -175,7 +174,13 @@ module ActiveMerchant #:nodoc:
         else
           scopes = []
         end
-        scopes.collect{ |s| "scope=#{URI.encode(s.to_s.strip.upcase)}" }.join("&")
+
+        scopes_str = ""
+        (0...scopes.length).each { |idx|
+          s = scopes[idx]
+          scopes_str += "&scope(#{idx})=#{CGI.escape(s.to_s.strip.upcase)}"
+        }
+        scopes_str[1..-1]
       end
 
       private
@@ -191,14 +196,6 @@ module ActiveMerchant #:nodoc:
         end
         body += "requestEnvelope.errorLanguage=en_US"
       end
-
-
-=begin
-      private
-      def setup_purchase(options)
-        commit('Pay', build_adaptive_payment_pay_request(options))
-      end
-=end
     end
   end
 end

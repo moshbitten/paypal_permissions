@@ -1,5 +1,15 @@
+require 'cgi'
 require 'openssl'
 require 'base64'
+
+
+class Hash
+  def to_paypal_permissions_query
+    collect do |key, value|
+      "#{key}=#{value}"
+    end.sort * '&'
+  end
+end
 
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
@@ -16,8 +26,8 @@ module ActiveMerchant #:nodoc:
         # no query params, but if there were, this is where they'd go
         query_params = {}
         key = [
-          URI.encode(api_password),
-          URI.encode(access_token_verifier),
+          paypal_encode(api_password),
+          paypal_encode(access_token_verifier),
         ].join("&")
 
         params = query_params.dup.merge({
@@ -27,17 +37,30 @@ module ActiveMerchant #:nodoc:
           "oauth_token" => access_token,
           "oauth_timestamp" => timestamp,
         })
-        sorted_params = Hash[params.sort]
-        sorted_query_string = sorted_params.to_query
+        sorted_query_string = params.to_paypal_permissions_query
+        puts "paypal_encoded_sorted_query_string:#{paypal_encode(sorted_query_string)}"
 
         base = [
           "POST",
-          URI.encode(url),
-          URI.encode(sorted_query_string)
+          paypal_encode(url),
+          paypal_encode(sorted_query_string)
         ].join("&")
+        base = base.gsub /%([0-9A-F])([0-9A-F])/ do
+          "%#{$1.downcase}#{$2.downcase}"  # hack to match PayPal Java SDK bit for bit
+        end
 
-        hexdigest = OpenSSL::HMAC.hexdigest('sha1', key, base)
-        Base64.encode64(hexdigest).chomp
+        digest = OpenSSL::HMAC.digest('sha1', key, base)
+        Base64.encode64(digest).chomp
+      end
+
+      # The PayPalURLEncoder java class percent encodes everything other than 'a-zA-Z0-9 _'.
+      # Then it converts ' ' to '+'.
+      # Ruby's CGI.encode takes care of the ' ' and '*' to satisfy PayPal
+      # (but beware, URI.encode percent encodes spaces, and does nothing with '*').
+      # Finally, CGI.encode does not encode '.-', which we need to do here.
+      def paypal_encode str
+        s = str.dup
+        CGI.escape(s).gsub('.', '%2E').gsub('-', '%2D')
       end
     end
   end
