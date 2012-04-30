@@ -38,7 +38,6 @@ module ActiveMerchant #:nodoc:
           "oauth_timestamp" => timestamp,
         })
         sorted_query_string = params.to_paypal_permissions_query
-        puts "paypal_encoded_sorted_query_string:#{paypal_encode(sorted_query_string)}"
 
         base = [
           "POST",
