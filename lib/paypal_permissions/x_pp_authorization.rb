@@ -18,7 +18,7 @@ module ActiveMerchant #:nodoc:
       def x_pp_authorization_header url, api_user_id, api_password, access_token, access_token_verifier
         timestamp = Time.now.to_i.to_s
         signature = x_pp_authorization_signature url, api_user_id, api_password, timestamp, access_token, access_token_verifier
-        { 'X-PP-AUTHORIZATION' => "token=#{access_token},signature=#{signature},timestamp=#{timestamp}" }
+        { 'X-PAYPAL-AUTHORIZATION' => "token=#{access_token},signature=#{signature},timestamp=#{timestamp}" }
       end
 
       public
