@@ -14,6 +14,11 @@ end
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     module XPPAuthorization
+      # The PayPal documentation is incorrect (as are the PayPal Developer Technical Support representatives)
+      # in using 'X-PP-AUTHORIZATION' interchangeably with 'X-PAYPAL-AUTHORIZATION'.
+      # 'X-PP-AUTHORIZATION' *does not work* with the GetBasicPersonalData/GetAdvancedPersonalData endpoints.
+      # Hat tip to Matt Anderson for the discovery.
+      #
       public
       def x_pp_authorization_header url, api_user_id, api_password, access_token, access_token_verifier
         timestamp = Time.now.to_i.to_s
