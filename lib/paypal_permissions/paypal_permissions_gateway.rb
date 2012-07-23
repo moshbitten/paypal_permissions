@@ -153,9 +153,9 @@ module ActiveMerchant #:nodoc:
           :request_permissions => 'https://svcs.paypal.com/Permissions/RequestPermissions',
           :redirect_user_to_paypal => 'https://www.paypal.com/cgi-bin/webscr?cmd=_grant-permission&request_token=%s',
           :get_access_token => 'https://svcs.paypal.com/Permissions/GetAccessToken',
-          :get_permissions => 'https://www.paypal.com/Permissions/GetPermissions',
-          :get_basic_personal_data => 'https://www.paypal.com/Permissions/GetBasicPersonalData',
-          :get_advanced_personal_data => 'https://www.paypal.com/Permissions/GetAdvancedPersonalData',
+          :get_permissions => 'https://svcs.paypal.com/Permissions/GetPermissions',
+          :get_basic_personal_data => 'https://svcs.paypal.com/Permissions/GetBasicPersonalData',
+          :get_advanced_personal_data => 'https://svcs.paypal.com/Permissions/GetAdvancedPersonalData',
         }
       }
 
