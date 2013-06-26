@@ -20,10 +20,10 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "rake"
   s.add_development_dependency "vcr", "~> 1.11"
+  s.add_development_dependency "rspec", "~> 2.6"
 
   s.add_runtime_dependency "railties", "~> 3.0"
   s.add_runtime_dependency "activesupport", "~> 3.0"
   s.add_runtime_dependency "activemerchant"
-  s.add_runtime_dependency "rspec", "~> 2.6"
   # s.add_runtime_dependency "ammeter"
 end
